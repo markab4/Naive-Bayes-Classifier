@@ -20,16 +20,56 @@
 
 import os
 import sys
-import re
 
-directory = sys.argv[1]
-pos_reviews = os.path.join(directory, "pos")
-neg_reviews = os.path.join(directory, "neg")
 
-for folder in [pos_reviews, neg_reviews]:
-    for filename in os.listdir(folder):
-        if filename.endswith(".txt"):
-            f = open(os.path.join(folder, filename), "r")
-            text = f.read()
-            review = re.findall(r"[\w']+|[.,!?;:]", text)
-            print(text)
+def count_frequencies(text):
+    freq = {}
+    for word in text:
+        if word in freq:
+            freq[word] += 1
+        else:
+            freq[word] = 1
+    return freq
+
+
+def ignore_unseen_words(words, vocab):
+    for i in range(len(words)):
+        if words[i] not in vocab:
+            words.pop(i)
+
+
+def preprocess():
+    directory = sys.argv[1]
+
+    punctuation_to_remove = {'"', '*', '+', '.', '/', '<', '>', '@', '^', '_', '`', '{', '|', '~', ','}
+
+    vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
+
+    BOW = {}
+    classes = {}
+
+    for label in os.listdir(directory):                             # for each label
+        classes[label] = 0
+        folder = os.path.join(directory, label)
+        if os.path.isdir(folder):
+            concat_text = ""
+            for filename in os.listdir(folder):                     # for each document
+                if filename.endswith(".txt"):
+                    classes[label] += 1
+                    f = open(os.path.join(folder, filename), "r")
+                    text = f.read()
+                    for char in text:
+                        if char is '!' or char is "?":
+                            concat_text += " " + char
+                        elif char not in punctuation_to_remove:
+                            concat_text += char.lower()
+                    concat_text += " "
+            words = concat_text.split()
+            ignore_unseen_words(words, vocab)
+            BOW[label] = count_frequencies(words)
+    print(BOW)
+    print(classes)
+
+
+preprocess()
+
