@@ -11,8 +11,8 @@
 #   use add-one smoothing for BOW features
 
 # The training and the test files should have the following format:
-#   one example per line
-#   each line corresponds to an example
+#   one document per line
+#   each line corresponds to a document
 #   first column is the label
 #   the other columns are feature values.
 
@@ -33,43 +33,45 @@ def count_frequencies(text):
 
 
 def ignore_unseen_words(words, vocab):
-    for i in range(len(words)):
-        if words[i] not in vocab:
-            words.pop(i)
+    return [word for word in words if word in vocab]
+
+
+def remove_punctuation(text):
+    punctuation_to_remove = {'"', '*', '+', '.', '/', '<', '>', '@', '^', '_', '`', '{', '|', '~', ','}
+    new_text = ""
+    for char in text:
+        if char is '!' or char is "?":
+            new_text += " " + char
+        elif char not in punctuation_to_remove:
+            new_text += char.lower()
+    return new_text.split()
+
+
+def pretty_dict(dic):
+    pretty = ""
+    for key, val in dic.items():
+        pretty += '"' + str(key) + '" : ' + str(val) + '\n'
+    return pretty
 
 
 def preprocess():
-    directory = sys.argv[1]
-
-    punctuation_to_remove = {'"', '*', '+', '.', '/', '<', '>', '@', '^', '_', '`', '{', '|', '~', ','}
-
-    vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
-
-    BOW = {}
-    classes = {}
-
+    feature_vectors = []
     for label in os.listdir(directory):                             # for each label
-        classes[label] = 0
         folder = os.path.join(directory, label)
         if os.path.isdir(folder):
-            concat_text = ""
             for filename in os.listdir(folder):                     # for each document
                 if filename.endswith(".txt"):
-                    classes[label] += 1
                     f = open(os.path.join(folder, filename), "r")
-                    text = f.read()
-                    for char in text:
-                        if char is '!' or char is "?":
-                            concat_text += " " + char
-                        elif char not in punctuation_to_remove:
-                            concat_text += char.lower()
-                    concat_text += " "
-            words = concat_text.split()
-            ignore_unseen_words(words, vocab)
-            BOW[label] = count_frequencies(words)
-    print(BOW)
-    print(classes)
+                    words = remove_punctuation(f.read())
+                    words = ignore_unseen_words(words, vocab)
+                    feature_vectors.append({label: count_frequencies(words)})
+    # output = open("movie-review-BOW.NB", "w")
+    # for line in feature_vectors:
+    #     output.write(pretty_dict(line))
+    print(feature_vectors)
 
 
+directory = sys.argv[1]
+vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
 preprocess()
 
