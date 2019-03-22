@@ -65,10 +65,12 @@ def preprocess():
                     words = remove_punctuation(f.read())
                     words = ignore_unseen_words(words, vocab)
                     feature_vectors.append({label: count_frequencies(words)})
-    # output = open("movie-review-BOW.NB", "w")
-    # for line in feature_vectors:
-    #     output.write(pretty_dict(line))
-    print(feature_vectors)
+
+    name = "movie-review-BOW.NB - " + directory
+    name = name.replace("/", " ")
+    output = open(name, "w")
+    for line in feature_vectors:
+        output.write(pretty_dict(line))
 
 
 directory = sys.argv[1]
