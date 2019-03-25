@@ -20,6 +20,7 @@
 
 import os
 import sys
+import json
 
 
 def count_frequencies(text):
@@ -47,12 +48,6 @@ def remove_punctuation(text):
     return new_text.split()
 
 
-def pretty_dict(dic):
-    pretty = ""
-    for key, val in dic.items():
-        pretty += '"' + str(key) + '" : ' + str(val) + '\n'
-    return pretty
-
 
 def preprocess():
     feature_vectors = []
@@ -65,12 +60,14 @@ def preprocess():
                     words = remove_punctuation(f.read())
                     words = ignore_unseen_words(words, vocab)
                     feature_vectors.append({label: count_frequencies(words)})
+                    f.close()
 
-    name = "movie-review-BOW.NB - " + directory
-    name = name.replace("/", " ")
-    output = open(name, "w")
+    output_name = "movie-review-" + directory.replace("/", "").replace("all-reviews", "BOW") + ".NB"
+    output = open(output_name, "w")
     for line in feature_vectors:
-        output.write(pretty_dict(line))
+        output.write(json.dumps(line) + '\n')
+    # output.write(parsed)
+    output.close()
 
 
 directory = sys.argv[1]
