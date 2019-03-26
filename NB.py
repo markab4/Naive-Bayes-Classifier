@@ -15,6 +15,7 @@
 import os
 import sys
 import json
+import math
 
 training_file = sys.argv[1]  # 'movie-review-small.NB'
 # test_file = sys.argv[2]
@@ -22,16 +23,51 @@ training_file = sys.argv[1]  # 'movie-review-small.NB'
 # predictions_output = sys.argv[4]
 
 
-training_feature_vectors = []
-
+documents = []
+classes = {}
+logprior = {}
+vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
+bow_for_each_class = {}
+num_of_words_in_each_class = {}
 
 def input_training_file():
     file = open(training_file, "r")
     for line in file.readlines():
-        training_feature_vectors.append(json.loads(line))
+        vector = json.loads(line)
+        documents.append(vector)
+        key = list(vector.keys())[0]
+        if key in classes:
+            classes[key].append(vector[key])
+        else:
+            classes[key] = [vector[key]]
     file.close()
-#     
-# def train_NB():
-#     for document in training_feature_vectors:
-#
-#
+
+
+def train_NB():
+    total_num_of_documents = len(documents)
+    for label, docs_in_the_class in classes.items():
+        # calculate P(c) terms
+        num_of_documents_in_this_class = len(docs_in_the_class)
+        logprior[label] = math.log2(num_of_documents_in_this_class / total_num_of_documents)
+        bow_for_each_class[label] = {}
+        num_of_words_in_each_class[label] = 0
+        for doc in docs_in_the_class:
+            for word, value in doc.items():
+                num_of_words_in_each_class[label] += value
+                if word in bow_for_each_class[label]:
+                    bow_for_each_class[label][word] += value
+                else:
+                    bow_for_each_class[label][word] = value
+
+        # Calculate P(w|c) terms
+        # for word in vocab:
+        #     count
+    print("documents", documents,
+          "\nclasses", classes,
+          "\nlogprior", logprior,
+          "\nbigdoc", bow_for_each_class,
+          "\ncount", num_of_words_in_each_class)
+
+
+input_training_file()
+train_NB()

@@ -48,7 +48,6 @@ def remove_punctuation(text):
     return new_text.split()
 
 
-
 def preprocess():
     feature_vectors = []
     for label in os.listdir(directory):                             # for each label
