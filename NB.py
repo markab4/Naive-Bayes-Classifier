@@ -8,10 +8,6 @@
 # The last line in the output file should list the overall accuracy of the classifier on the test data.
 
 
-# def train_nb(documents, classes):
-    # classes is a dictionary that holds key-label, value-# of documents with that label
-    # we have vocab
-
 import os
 import sys
 import json
@@ -25,10 +21,12 @@ training_file = sys.argv[1]  # 'movie-review-small.NB'
 
 documents = []
 classes = {}
-logprior = {}
+log_prior = {}
 vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
 bow_for_each_class = {}
 num_of_words_in_each_class = {}
+log_likelihood = {}
+
 
 def input_training_file():
     file = open(training_file, "r")
@@ -43,12 +41,12 @@ def input_training_file():
     file.close()
 
 
-def train_NB():
+def train_nb():
     total_num_of_documents = len(documents)
     for label, docs_in_the_class in classes.items():
         # calculate P(c) terms
         num_of_documents_in_this_class = len(docs_in_the_class)
-        logprior[label] = math.log2(num_of_documents_in_this_class / total_num_of_documents)
+        log_prior[label] = math.log2(num_of_documents_in_this_class / total_num_of_documents)
         bow_for_each_class[label] = {}
         num_of_words_in_each_class[label] = 0
         for doc in docs_in_the_class:
@@ -59,15 +57,24 @@ def train_NB():
                 else:
                     bow_for_each_class[label][word] = value
 
-        # Calculate P(w|c) terms
-        # for word in vocab:
-        #     count
-    print("documents", documents,
-          "\nclasses", classes,
-          "\nlogprior", logprior,
-          "\nbigdoc", bow_for_each_class,
-          "\ncount", num_of_words_in_each_class)
+        # calculate P(w|c) terms
+        for word in vocab:
+            count = 0
+            if word in bow_for_each_class[label]:
+                count = bow_for_each_class[label][word]
+            log_likelihood[(word, label)] = math.log2(
+                (count + 1) /
+                (num_of_words_in_each_class[label] + len(vocab)))
+
+    # print("documents", documents,
+    #       "\nclasses", classes,
+    #       "\nlogprior", log_prior,
+    #       "\nbigdoc", bow_for_each_class,
+    #       "\ncount", num_of_words_in_each_class,
+    #       "\nlog likelihood", log_likelihood,
+    #       "\nlength of vocab", len(vocab)
+    #       )
 
 
 input_training_file()
-train_NB()
+train_nb()
