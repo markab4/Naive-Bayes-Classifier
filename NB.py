@@ -76,5 +76,22 @@ def train_nb():
     #       )
 
 
+def arg_max(d):
+    v = list(d.values())
+    k = list(d.keys())
+    return k[v.index(max(v))]
+
+
+def test_nb(test_doc):
+    sum_of_log_probs = {}
+    for label, docs_in_the_class in classes.items():
+        sum_of_log_probs[label] = log_prior[label]
+        for word in test_doc:
+            if word in vocab:
+                sum_of_log_probs[label] += log_likelihood[(word, label)]
+    return arg_max(sum_of_log_probs)
+
+
 input_training_file()
 train_nb()
+print(test_nb(["fast", "couple", "shoot", "fly"]))
