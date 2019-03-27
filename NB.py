@@ -13,22 +13,24 @@ import sys
 import json
 import math
 
-training_file = sys.argv[1]  # 'movie-review-small.NB'
-# test_file = sys.argv[2]
-# model_output = sys.argv[3]
-# predictions_output = sys.argv[4]
+
+# documents = []
+# classes = {}
+# log_prior = {}
+
+# bow_for_each_class = {}
+# num_of_words_in_each_class = {}
+# log_likelihood = {}
 
 
-documents = []
-classes = {}
-log_prior = {}
-vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
-bow_for_each_class = {}
-num_of_words_in_each_class = {}
-log_likelihood = {}
-
-
-def input_training_file():
+def get_inputs():
+    training_file = sys.argv[1]  # 'movie-review-small.NB'
+    test_file = sys.argv[2]
+    model_output_file = sys.argv[3]
+    predictions_output_file = sys.argv[4]
+    vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
+    documents = []
+    classes = {}
     file = open(training_file, "r")
     for line in file.readlines():
         vector = json.loads(line)
@@ -39,10 +41,15 @@ def input_training_file():
         else:
             classes[key] = [vector[key]]
     file.close()
+    return documents, classes, vocab, test_file, model_output_file, predictions_output_file
 
 
-def train_nb():
+def train_nb(documents, classes, vocab):
     total_num_of_documents = len(documents)
+    log_prior = {}
+    bow_for_each_class = {}
+    log_likelihood = {}
+    num_of_words_in_each_class = {}
     for label, docs_in_the_class in classes.items():
         # calculate P(c) terms
         num_of_documents_in_this_class = len(docs_in_the_class)
@@ -65,6 +72,7 @@ def train_nb():
             log_likelihood[(word, label)] = math.log2(
                 (count + 1) /
                 (num_of_words_in_each_class[label] + len(vocab)))
+    return log_prior, log_likelihood, bow_for_each_class
 
     # print("documents", documents,
     #       "\nclasses", classes,
@@ -82,16 +90,34 @@ def arg_max(d):
     return k[v.index(max(v))]
 
 
-def test_nb(test_doc):
+def test_nb_on_small(test_doc, classes, vocab, log_prior, log_likelihood):
     sum_of_log_probs = {}
     for label, docs_in_the_class in classes.items():
         sum_of_log_probs[label] = log_prior[label]
         for word in test_doc:
             if word in vocab:
                 sum_of_log_probs[label] += log_likelihood[(word, label)]
+        print("probability of class", label, "is", sum_of_log_probs[label])
     return arg_max(sum_of_log_probs)
 
 
-input_training_file()
-train_nb()
-print(test_nb(["fast", "couple", "shoot", "fly"]))
+def answer_questions():
+    documents, classes, vocab, test_file, model_output, predictions_output = get_inputs()
+    log_prior, log_likelihood, bow_in_each_class = train_nb(documents, classes, vocab)
+    test_result = test_nb_on_small(["fast", "couple", "shoot", "fly"], classes, vocab, log_prior, log_likelihood)
+    model_output_file = open(model_output, "w")
+    model_output_file.write(pretty_dict(log_likelihood))
+    model_output_file.close()
+    predictions_output_file = open(predictions_output, "w")
+    predictions_output_file.write(test_result)
+    predictions_output_file.close()
+
+
+def pretty_dict(dic):
+    pretty = ""
+    for key, val in dic.items():
+        pretty += '"' + str(key) + '" : ' + str(val) + '\n'
+    return pretty
+
+
+answer_questions()
