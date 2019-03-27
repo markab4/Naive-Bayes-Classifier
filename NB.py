@@ -110,13 +110,13 @@ def answer_questions():
     documents, classes, vocab, test_docs, model_output, predictions_output = get_inputs()
     log_prior, log_likelihood, bow_in_each_class = train_nb(documents, classes, vocab)
     results = {True: 0, False: 0}
-    predictions = ""
+    predictions = "Document # \t Predicted Label \t Actual Label\n"
     num = 1
     for label, documents in test_docs.items():
         for document in documents:
             test_result = test_nb(document, classes, vocab, log_prior, log_likelihood)
             results[test_result == label] += 1
-            predictions += str(num) + ". Predicted to be " + test_result + ". Actual label is " + label + ".\n"
+            predictions += "\t" + str(num) + "\t\t | \t\t" + test_result + "\t\t | \t\t" + label + "\n"
             num += 1
     model_output_file = open(model_output, "w")
     model_output_file.write(pretty_prob(log_likelihood))
