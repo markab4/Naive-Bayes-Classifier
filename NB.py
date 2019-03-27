@@ -24,15 +24,18 @@ import math
 
 
 def get_inputs():
-    training_file = sys.argv[1]  # 'movie-review-small.NB'
-    test_file = sys.argv[2]
+    training = sys.argv[1]  # 'movie-review-small.NB'
+    test = sys.argv[2]
     model_output_file = sys.argv[3]
     predictions_output_file = sys.argv[4]
     vocab = set([line.rstrip() for line in open('all-reviews/imdb.vocab')])
     documents = []
     classes = {}
-    file = open(training_file, "r")
-    for line in file.readlines():
+    test_docs = {}
+
+    # training file
+    training_file = open(training, "r")
+    for line in training_file.readlines():
         vector = json.loads(line)
         documents.append(vector)
         key = list(vector.keys())[0]
@@ -40,8 +43,19 @@ def get_inputs():
             classes[key].append(vector[key])
         else:
             classes[key] = [vector[key]]
-    file.close()
-    return documents, classes, vocab, test_file, model_output_file, predictions_output_file
+    training_file.close()
+
+    # test file
+    test_file = open(test, "r")
+    for line in test_file.readlines():
+        vector = json.loads(line)
+        key = list(vector.keys())[0]
+        if key in test_docs:
+            test_docs[key].append(bow_to_list(vector[key]))
+        else:
+            test_docs[key] = [bow_to_list(vector[key])]
+    test_file.close()
+    return documents, classes, vocab, test_docs, model_output_file, predictions_output_file
 
 
 def train_nb(documents, classes, vocab):
@@ -74,15 +88,6 @@ def train_nb(documents, classes, vocab):
                 (num_of_words_in_each_class[label] + len(vocab)))
     return log_prior, log_likelihood, bow_for_each_class
 
-    # print("documents", documents,
-    #       "\nclasses", classes,
-    #       "\nlogprior", log_prior,
-    #       "\nbigdoc", bow_for_each_class,
-    #       "\ncount", num_of_words_in_each_class,
-    #       "\nlog likelihood", log_likelihood,
-    #       "\nlength of vocab", len(vocab)
-    #       )
-
 
 def arg_max(d):
     v = list(d.values())
@@ -90,34 +95,54 @@ def arg_max(d):
     return k[v.index(max(v))]
 
 
-def test_nb_on_small(test_doc, classes, vocab, log_prior, log_likelihood):
+def test_nb(test_doc, classes, vocab, log_prior, log_likelihood):
     sum_of_log_probs = {}
     for label, docs_in_the_class in classes.items():
         sum_of_log_probs[label] = log_prior[label]
         for word in test_doc:
             if word in vocab:
                 sum_of_log_probs[label] += log_likelihood[(word, label)]
-        print("probability of class", label, "is", sum_of_log_probs[label])
+        # print("probability of class", label, "is", sum_of_log_probs[label])
     return arg_max(sum_of_log_probs)
 
 
 def answer_questions():
-    documents, classes, vocab, test_file, model_output, predictions_output = get_inputs()
+    documents, classes, vocab, test_docs, model_output, predictions_output = get_inputs()
     log_prior, log_likelihood, bow_in_each_class = train_nb(documents, classes, vocab)
-    test_result = test_nb_on_small(["fast", "couple", "shoot", "fly"], classes, vocab, log_prior, log_likelihood)
+    results = {True: 0, False: 0}
+    predictions = ""
+    num = 1
+    for label, documents in test_docs.items():
+        for document in documents:
+            test_result = test_nb(document, classes, vocab, log_prior, log_likelihood)
+            results[test_result == label] += 1
+            predictions += str(num) + ". Predicted to be " + test_result + ". Actual label is " + label + ".\n"
+            num += 1
     model_output_file = open(model_output, "w")
-    model_output_file.write(pretty_dict(log_likelihood))
+    model_output_file.write(pretty_prob(log_likelihood))
     model_output_file.close()
     predictions_output_file = open(predictions_output, "w")
-    predictions_output_file.write(test_result)
+    accuracy = results[True] / (results[False] + results[True]) * 100
+    predictions += "Total: " + str(results) + ". Accuracy: " + str(accuracy) + '%'
+    predictions_output_file.write(predictions)
     predictions_output_file.close()
 
 
-def pretty_dict(dic):
+def pretty_prob(dic):
     pretty = ""
     for key, val in dic.items():
-        pretty += '"' + str(key) + '" : ' + str(val) + '\n'
+        w = str(key[0])
+        c = str(key[1])
+        pretty += 'P(' + w + ' | ' + c + ') = ' + str(val) + '\n'
     return pretty
+
+
+def bow_to_list(bow):
+    output = []
+    for word, freq in bow.items():
+        for i in range(freq):
+            output.append(word)
+    return output
 
 
 answer_questions()

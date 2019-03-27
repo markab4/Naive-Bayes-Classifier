@@ -1,1 +1,2 @@
-action
+1. Predicted to be action. Actual label is action.
+Total: {True: 1, False: 0}. Accuracy: 100.0%
