@@ -8,19 +8,9 @@
 # The last line in the output file should list the overall accuracy of the classifier on the test data.
 
 
-import os
 import sys
 import json
 import math
-
-
-# documents = []
-# classes = {}
-# log_prior = {}
-
-# bow_for_each_class = {}
-# num_of_words_in_each_class = {}
-# log_likelihood = {}
 
 
 def get_inputs():
@@ -119,7 +109,9 @@ def answer_questions():
             predictions += "\t" + str(num) + "\t\t | \t\t" + test_result + "\t\t | \t\t" + label + "\n"
             num += 1
     model_output_file = open(model_output, "w")
-    model_output_file.write(pretty_prob(log_likelihood))
+    model = "Log prior probability of each class:\n" + str(log_prior) + \
+            '\n\nLog likelihood of each word: \n' + pretty_prob(log_likelihood)
+    model_output_file.write(model)
     model_output_file.close()
     predictions_output_file = open(predictions_output, "w")
     accuracy = results[True] / (results[False] + results[True]) * 100
