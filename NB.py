@@ -14,7 +14,7 @@ import math
 
 
 def get_inputs():
-    training = sys.argv[1]  # 'movie-review-small.NB'
+    training = sys.argv[1]
     test = sys.argv[2]
     model_output_file = sys.argv[3]
     predictions_output_file = sys.argv[4]
@@ -25,26 +25,47 @@ def get_inputs():
 
     # training file
     training_file = open(training, "r")
+
     for line in training_file.readlines():
         vector = json.loads(line)
         documents.append(vector)
-        key = list(vector.keys())[0]
-        if key in classes:
-            classes[key].append(vector[key])
+        label = list(vector.keys())[0]
+        if label in classes:
+            classes[label].append(vector[label])
         else:
-            classes[key] = [vector[key]]
+            classes[label] = [vector[label]]
+    # The following code replaces the previous loop if using binary NB
+    # for line in training_file.readlines():
+    #     vector = json.loads(line)
+    #     documents.append(vector)
+    #     label = list(vector.keys())[0]
+    #     clipped = {word: 1 if count > 0 else 0 for word, count in vector[label].items()}
+    #     if label in classes:
+    #         classes[label].append(clipped)
+    #     else:
+    #         classes[label] = [clipped]
     training_file.close()
 
     # test file
     test_file = open(test, "r")
+
     for line in test_file.readlines():
         vector = json.loads(line)
-        key = list(vector.keys())[0]
-        if key in test_docs:
-            test_docs[key].append(bow_to_list(vector[key]))
+        label = list(vector.keys())[0]
+        if label in test_docs:
+            test_docs[label].append(bow_to_list(vector[label]))
         else:
-            test_docs[key] = [bow_to_list(vector[key])]
+            test_docs[label] = [bow_to_list(vector[label])]
+    # # The following code replaces the previous loop if using binary NB
+    # for line in test_file.readlines():
+    #     vector = json.loads(line)
+    #     label = list(vector.keys())[0]
+    #     if label in test_docs:
+    #         test_docs[label].append(vector[label].keys())
+    #     else:
+    #         test_docs[label] = [vector[label].keys()]
     test_file.close()
+
     return documents, classes, vocab, test_docs, model_output_file, predictions_output_file
 
 
@@ -55,6 +76,7 @@ def train_nb(documents, classes, vocab):
     log_likelihood = {}
     num_of_words_in_each_class = {}
     for label, docs_in_the_class in classes.items():
+
         # calculate P(c) terms
         num_of_documents_in_this_class = len(docs_in_the_class)
         log_prior[label] = math.log2(num_of_documents_in_this_class / total_num_of_documents)
