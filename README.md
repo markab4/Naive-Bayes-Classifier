@@ -1,6 +1,6 @@
 # Movie Review Classification using Naïve Bayes
 
-This repository implements in Python a Naïve Bayes classifier with bag-of-word (BOW ) features and Add-one smoothing. It implements the algorithm from scratch and does not use off-the-shelf software. See Report for details.
+This repository implements in Python a Naïve Bayes classifier with bag-of-word (BOW ) features and Add-one smoothing. It implements the algorithm from scratch and does not use off-the-shelf software. See [Report](Report%20Mark%20Abramov.pdf) for details.
 
 ## Implementation
 In this project, there are 2 scripts: [``NB.py``](NB.py) and [``pre-process.py``](pre-process.py). 
